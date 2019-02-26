@@ -16,7 +16,7 @@ fn main() {
     const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
     const AUTHORS: Option<&'static str> = option_env!("CARGO_PKG_AUTHORS");
 
-    let matches = App::new("RGB - Bifrost Server")
+    let matches = App::new("RGB - Bifröst Server")
         .version(VERSION.unwrap_or("<unknown>"))
         .author(AUTHORS.unwrap_or("<unknown>"))
         .about("Store and help relaying RGB transactions")
