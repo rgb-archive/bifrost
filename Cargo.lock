@@ -28,7 +28,7 @@ dependencies = [
  "bitcoin 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hyper 0.9.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "rgb 0.1.0 (git+https://github.com/rgb-org/rgb.git?rev=dd51ef945b778ac0d1f010232ec3a8394c4142cd)",
+ "rgb 0.1.0 (git+https://github.com/rgb-org/rgb.git?rev=1a626e1edd61bf5bc836b8fac5469e4e0d6c3426)",
  "strason 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -356,7 +356,7 @@ dependencies = [
 [[package]]
 name = "rgb"
 version = "0.1.0"
-source = "git+https://github.com/rgb-org/rgb.git?rev=dd51ef945b778ac0d1f010232ec3a8394c4142cd#dd51ef945b778ac0d1f010232ec3a8394c4142cd"
+source = "git+https://github.com/rgb-org/rgb.git?rev=1a626e1edd61bf5bc836b8fac5469e4e0d6c3426#1a626e1edd61bf5bc836b8fac5469e4e0d6c3426"
 dependencies = [
  "bitcoin 0.14.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -609,7 +609,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum redox_syscall 0.1.44 (registry+https://github.com/rust-lang/crates.io-index)" = "a84bcd297b87a545980a2d25a0beb72a1f490c31f0a9fde52fca35bfbb1ceb70"
 "checksum redox_termios 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "7e891cfe48e9100a70a3b6eb652fef28920c117d366339687bd5576160db0f76"
 "checksum remove_dir_all 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3488ba1b9a2084d38645c4c08276a1752dcbf2c7130d74f1569681ad5d2799c5"
-"checksum rgb 0.1.0 (git+https://github.com/rgb-org/rgb.git?rev=dd51ef945b778ac0d1f010232ec3a8394c4142cd)" = "<none>"
+"checksum rgb 0.1.0 (git+https://github.com/rgb-org/rgb.git?rev=1a626e1edd61bf5bc836b8fac5469e4e0d6c3426)" = "<none>"
 "checksum rust-crypto 0.2.36 (registry+https://github.com/rust-lang/crates.io-index)" = "f76d05d3993fd5f4af9434e8e436db163a12a9d40e1a58a726f27a01dfd12a2a"
 "checksum rustc-serialize 0.3.24 (registry+https://github.com/rust-lang/crates.io-index)" = "dcf128d1287d2ea9d80910b5f1120d0b8eede3fbf1abe91c40d39ea7d51e6fda"
 "checksum same-file 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "d931a44fdaa43b8637009e7632a02adc4f2b2e0733c08caa4cf00e8da4a117a7"
