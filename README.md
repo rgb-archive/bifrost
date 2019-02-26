@@ -1,6 +1,6 @@
 # RGB - Bifröst
 
-Bifröst, the RGB "bridge" server
+Bifröst, the RGB "bridge" Server
 
 * [Installation](#installation)
 * [Configuration](#configuration)
