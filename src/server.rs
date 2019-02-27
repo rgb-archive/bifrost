@@ -12,6 +12,7 @@ use std::io::Read;
 use rgb::proof::Proof;
 use core::borrow::BorrowMut;
 use hyper::method::Method::{Get,Post};
+use std::str::FromStr;
 
 
 struct RGBServer {
@@ -35,10 +36,14 @@ impl RGBServer {
 
         let parts: Vec<&str> = parts[1].split(":").collect();
 
-        Some(OutPoint {
-            txid: Sha256dHash::from_hex(parts[0]).unwrap(),
-            vout: parts[1].parse().unwrap()
-        })
+        if let Ok(vout) = parts[1].parse() {
+            Some(OutPoint {
+                txid: Sha256dHash::from_hex(parts[0]).unwrap(),
+                vout
+            })
+        } else {
+            None // Could not parse the vout, not an integer
+        }
     }
 }
 
@@ -50,7 +55,14 @@ impl Handler for RGBServer {
         match req.uri {
             AbsolutePath(ref path) => {
                 if req.method == Get {
-                    let outpoint = self.get_outpoint(path).unwrap();
+                    let outpoint = match self.get_outpoint(path) {
+                        Some(val) => val,
+                        None => {
+                            eprintln!("Invalid outpoint in GET req for `{}`", path);
+                            return;
+                        }
+                    };
+
                     let proofs = self.database.get_proofs_for(&outpoint);
 
                     use bitcoin::network::serialize::RawEncoder;
@@ -66,7 +78,13 @@ impl Handler for RGBServer {
 
                     return;
                 } else if req.method == Post {
-                    let outpoint = self.get_outpoint(path).unwrap();
+                    let outpoint = match self.get_outpoint(path) {
+                        Some(val) => val,
+                        None => {
+                            eprintln!("Invalid outpoint in POST req for `{}`", path);
+                            return;
+                        }
+                    };
 
                     use bitcoin::network::serialize::deserialize;
                     let decoded: Proof = deserialize(&mut buffer).unwrap();
