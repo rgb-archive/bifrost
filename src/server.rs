@@ -1,19 +1,21 @@
-use std::convert::Into;
-use hyper::server::{Request, Response, Server};
-use hyper::method::Method;
-use database::Database;
-use hyper::uri::RequestUri::AbsolutePath;
-use hyper::server::Handler;
-use hyper::net::Fresh;
-use hyper::NotFound;
-use bitcoin::OutPoint;
-use bitcoin::util::hash::Sha256dHash;
-use std::io::Read;
-use rgb::proof::Proof;
 use core::borrow::BorrowMut;
-use hyper::method::Method::{Get,Post};
+use std::convert::Into;
+use std::io::Read;
 use std::str::FromStr;
 
+use bitcoin::network::serialize::Error;
+use bitcoin::OutPoint;
+use bitcoin::util::hash::Sha256dHash;
+use hyper::method::Method;
+use hyper::method::Method::{Get, Post};
+use hyper::net::Fresh;
+use hyper::NotFound;
+use hyper::server::{Request, Response, Server};
+use hyper::server::Handler;
+use hyper::uri::RequestUri::AbsolutePath;
+use rgb::proof::Proof;
+
+use database::Database;
 
 struct RGBServer {
     database: Database
@@ -36,13 +38,13 @@ impl RGBServer {
 
         let parts: Vec<&str> = parts[1].split(":").collect();
 
-        if let Ok(vout) = parts[1].parse() {
+        if let (Ok(vout), Ok(txid)) = (parts[1].parse(), Sha256dHash::from_hex(parts[0])) {
             Some(OutPoint {
-                txid: Sha256dHash::from_hex(parts[0]).unwrap(),
+                txid,
                 vout
             })
         } else {
-            None // Could not parse the vout, not an integer
+            None // Could not parse the vout or the txid
         }
     }
 }
@@ -87,8 +89,14 @@ impl Handler for RGBServer {
                     };
 
                     use bitcoin::network::serialize::deserialize;
-                    let decoded: Proof = deserialize(&mut buffer).unwrap();
+                    let decoded: Result<Proof, Error> = deserialize(&mut buffer);
 
+                    if let Err(e) = decoded {
+                        eprintln!("Could not decode the uploaded proof for `{}`: {}", path, e);
+                        return;
+                    }
+
+                    let decoded = decoded.unwrap();
                     println!("Uploaded proof for {}", outpoint);
 
                     self.database.save_proof(&decoded, &outpoint.txid);
