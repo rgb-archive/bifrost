@@ -1,18 +1,21 @@
+use core::borrow::BorrowMut;
 use std::convert::Into;
-use hyper::server::{Request, Response, Server};
-use hyper::method::Method;
-use database::Database;
-use hyper::uri::RequestUri::AbsolutePath;
-use hyper::server::Handler;
-use hyper::net::Fresh;
-use hyper::NotFound;
+use std::io::Read;
+use std::str::FromStr;
+
+use bitcoin::network::serialize::Error;
 use bitcoin::OutPoint;
 use bitcoin::util::hash::Sha256dHash;
-use std::io::Read;
+use hyper::method::Method;
+use hyper::method::Method::{Get, Post};
+use hyper::net::Fresh;
+use hyper::NotFound;
+use hyper::server::{Request, Response, Server};
+use hyper::server::Handler;
+use hyper::uri::RequestUri::AbsolutePath;
 use rgb::proof::Proof;
-use core::borrow::BorrowMut;
-use hyper::method::Method::{Get,Post};
 
+use database::Database;
 
 struct RGBServer {
     database: Database
@@ -35,10 +38,14 @@ impl RGBServer {
 
         let parts: Vec<&str> = parts[1].split(":").collect();
 
-        Some(OutPoint {
-            txid: Sha256dHash::from_hex(parts[0]).unwrap(),
-            vout: parts[1].parse().unwrap()
-        })
+        if let (Ok(vout), Ok(txid)) = (parts[1].parse(), Sha256dHash::from_hex(parts[0])) {
+            Some(OutPoint {
+                txid,
+                vout
+            })
+        } else {
+            None // Could not parse the vout or the txid
+        }
     }
 }
 
@@ -50,7 +57,14 @@ impl Handler for RGBServer {
         match req.uri {
             AbsolutePath(ref path) => {
                 if req.method == Get {
-                    let outpoint = self.get_outpoint(path).unwrap();
+                    let outpoint = match self.get_outpoint(path) {
+                        Some(val) => val,
+                        None => {
+                            eprintln!("Invalid outpoint in GET req for `{}`", path);
+                            return;
+                        }
+                    };
+
                     let proofs = self.database.get_proofs_for(&outpoint);
 
                     use bitcoin::network::serialize::RawEncoder;
@@ -66,11 +80,23 @@ impl Handler for RGBServer {
 
                     return;
                 } else if req.method == Post {
-                    let outpoint = self.get_outpoint(path).unwrap();
+                    let outpoint = match self.get_outpoint(path) {
+                        Some(val) => val,
+                        None => {
+                            eprintln!("Invalid outpoint in POST req for `{}`", path);
+                            return;
+                        }
+                    };
 
                     use bitcoin::network::serialize::deserialize;
-                    let decoded: Proof = deserialize(&mut buffer).unwrap();
+                    let decoded: Result<Proof, Error> = deserialize(&mut buffer);
 
+                    if let Err(e) = decoded {
+                        eprintln!("Could not decode the uploaded proof for `{}`: {}", path, e);
+                        return;
+                    }
+
+                    let decoded = decoded.unwrap();
                     println!("Uploaded proof for {}", outpoint);
 
                     self.database.save_proof(&decoded, &outpoint.txid);
