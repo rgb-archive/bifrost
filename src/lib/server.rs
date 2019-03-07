@@ -1,27 +1,36 @@
+use core::borrow::BorrowMut;
 use std::convert::Into;
-use hyper::server::{Request, Response, Server};
-use hyper::method::Method;
-use database::Database;
-use hyper::uri::RequestUri::AbsolutePath;
-use hyper::server::Handler;
-use hyper::net::Fresh;
-use hyper::NotFound;
+use std::io::Read;
+use std::marker::{Send, Sync};
+use std::path::Path;
+
 use bitcoin::OutPoint;
 use bitcoin::util::hash::Sha256dHash;
-use std::io::Read;
+use hyper::method::Method;
+use hyper::method::Method::{Get, Post};
+use hyper::net::Fresh;
+use hyper::NotFound;
+use hyper::server::{Request, Response, Server};
+use hyper::server::Handler;
+use hyper::uri::RequestUri::AbsolutePath;
 use rgb::proof::Proof;
-use core::borrow::BorrowMut;
-use hyper::method::Method::{Get,Post};
 
-
-struct RGBServer {
-    database: Database
+pub trait BifrostDatabase {
+    fn new(basedir: &Path) -> Self;
+    fn get_proofs_for(&self, outpoint: &OutPoint) -> Vec<Proof>;
+    fn save_proof(&self, proof: &Proof, txid: &Sha256dHash);
 }
 
-impl RGBServer {
-    pub fn new(database: Database) -> RGBServer {
+struct RGBServer<D: BifrostDatabase + Sync + Send> {
+    database: Box<D>
+}
+
+impl<D> RGBServer<D>
+    where D: BifrostDatabase + Sync + Send
+{
+    pub fn new(database: D) -> RGBServer<D> {
         RGBServer {
-            database
+            database: Box::new(database)
         }
     }
 
@@ -42,7 +51,9 @@ impl RGBServer {
     }
 }
 
-impl Handler for RGBServer {
+impl<D> Handler for RGBServer<D>
+    where D: BifrostDatabase + Sync + Send
+{
     fn handle<'a, 'k>(&'a self, mut req: Request<'a, 'k>, mut res: Response<'a, Fresh>) {
         let mut buffer: Vec<u8> = Vec::new();
         req.borrow_mut().read_to_end(&mut buffer);
@@ -86,7 +97,9 @@ impl Handler for RGBServer {
     }
 }
 
-pub fn start_server(port: String, database: Database) {
+pub fn start_server<D: 'static + BifrostDatabase>(port: String, database: D)
+    where D: BifrostDatabase + Sync + Send
+{
     let rgb_server = RGBServer::new(database);
 
     let _listening = Server::http(format!("0.0.0.0:{}", port)).unwrap()

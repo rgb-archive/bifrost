@@ -1,16 +1,19 @@
 extern crate bitcoin;
 extern crate clap;
 extern crate core;
-extern crate rgb;
 extern crate hyper;
+extern crate rgb;
 
-use clap::{App, Arg, SubCommand};
 use std::env::home_dir;
 use std::path::Path;
-use server::start_server;
+
+use clap::{App, Arg, SubCommand};
+
+use lib::server::BifrostDatabase;
+use lib::server::start_server;
 
 pub mod database;
-pub mod server;
+pub mod lib;
 
 fn main() {
     const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");

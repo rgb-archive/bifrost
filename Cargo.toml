@@ -16,3 +16,11 @@ default-features = false
 [features]
 default = []
 ssl = ["hyper/ssl"]
+
+[lib]
+name = "bifrost"
+path = "src/lib/mod.rs"
+
+[[bin]]
+name = "bifrost"
+path = "src/main.rs"

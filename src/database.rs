@@ -1,12 +1,15 @@
-use bitcoin::OutPoint;
-use std::path::Path;
 use std::fs;
-use bitcoin::util::hash::Sha256dHash;
-use bitcoin::network::serialize::BitcoinHash;
-use std::path::PathBuf;
-use std::io::Write;
 use std::io::Read;
+use std::io::Write;
+use std::path::Path;
+use std::path::PathBuf;
+
+use bitcoin::network::serialize::BitcoinHash;
+use bitcoin::OutPoint;
+use bitcoin::util::hash::Sha256dHash;
 use rgb::proof::Proof;
+
+use lib::server::BifrostDatabase;
 
 #[derive(Debug, Clone)]
 pub struct Database {
@@ -14,7 +17,15 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new(basedir: &Path) -> Database {
+    fn init(&self) {
+        if !self.basedir.as_path().exists() {
+            fs::create_dir(self.basedir.as_path());
+        }
+    }
+}
+
+impl BifrostDatabase for Database {
+    fn new(basedir: &Path) -> Database {
         let db = Database {
             basedir: Box::new(basedir.to_owned())
         };
@@ -24,13 +35,7 @@ impl Database {
         db
     }
 
-    fn init(&self) {
-        if !self.basedir.as_path().exists() {
-            fs::create_dir(self.basedir.as_path());
-        }
-    }
-
-    pub fn get_proofs_for(&self, outpoint: &OutPoint) -> Vec<Proof> {
+    fn get_proofs_for(&self, outpoint: &OutPoint) -> Vec<Proof> {
         use bitcoin::network::serialize::deserialize;
 
         let mut ans = Vec::new();
@@ -59,7 +64,7 @@ impl Database {
         ans
     }
 
-    pub fn save_proof(&self, proof: &Proof, txid: &Sha256dHash) {
+    fn save_proof(&self, proof: &Proof, txid: &Sha256dHash) {
         for out in &proof.output {
             let outpoint_str = match out.get_vout() {
                 Some(vout) => txid.be_hex_string() + ":" + vout.to_string().as_str(),
